@@ -1,5 +1,5 @@
 # React Pacman
-super simple (164 lines of code) version of the classic game. 
+super simple (155 lines of code) version of the classic game. 
 
 ## Scripts
 

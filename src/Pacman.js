@@ -18,7 +18,7 @@ const LEVEL = [
   [ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 ]
 ]
 //             Playground  Wall    Food    Pacman   Ghost
-const COLOR = ["#ddd",     "#444", "#aaa", "green", "red"]
+const COLOR = ["#ccc",     "#444", "#aaa", "green", "red"]
 const GAME_STATUS = {
   Running:          "RUNING",
   GameOver:         "GAMEOVER",
@@ -90,15 +90,13 @@ function gameReducer(state, action) {
       let isDone = true
       for (let row of state.level) 
         for (let item of row) 
-          if (item === ITEM.Food) isDone = false
-      
+          if (item === ITEM.Food) isDone = false      
       if (isDone) return {...state, status: GAME_STATUS.Done}
       // 1. compute new proposed pacman position
       let newPacmanPosition = {x: state.pacman.position.x + state.pacman.direction.x, y: state.pacman.position.y + state.pacman.direction.y}
       // 2. move ghosts - super simplified, no DFS, BFS, AI...  
       let newGhost = [...state.ghost].map(g => {
-        // ghost movement: 2x pacman = 1x ghost. isMove inversed every TimeTick (to ensure 50% speed of the pacman)
-        if (!g.isMoving) return {...g, isMoving: true} 
+        if (!g.isMoving) return {...g, isMoving: true} // ghost movement: 2x pacman = 1x ghost. isMoving inversed every TimeTick (to ensure 50% speed of the pacman)
         // - x axis movement preffered, then y axis movement
         if (newPacmanPosition.x < g.x && state.level[g.y][g.x-1] !== ITEM.Wall) return {x: g.x-1, y: g.y, isMoving: false}
         if (newPacmanPosition.x > g.x && state.level[g.y][g.x+1] !== ITEM.Wall) return {x: g.x+1, y: g.y, isMoving: false}
@@ -107,21 +105,14 @@ function gameReducer(state, action) {
         return {...g, isMoving:false}        // otherwise no ghost movement
       })
       // 4. check collistion with the wall
-      if (state.level[newPacmanPosition.y][newPacmanPosition.x] !== ITEM.Wall) {
-        // 5. check collision with the ghost
-        if (newGhost.find( g => { return newPacmanPosition.x === g.x && newPacmanPosition.y === g.y })) 
-          return {...state, pacman: {...state.pacman, position: newPacmanPosition }, status: GAME_STATUS.GameOver}
-        let newLevel = [...state.level].map(function(arr) { return arr.slice() })    // mark new position as Playground (without Food)
-        newLevel[newPacmanPosition.y][newPacmanPosition.x] = ITEM.Playground
-        return {...state, pacman: {...state.pacman, position: newPacmanPosition }, level: newLevel, ghost: newGhost }
-      }
-      // pacman is not moving, blocked by the wall
-      else {
-        // check collision with the ghost
-        if (newGhost.find( g => { return state.pacman.position.x === g.x && state.pacman.position.y === g.y })) 
-          return {...state, status: GAME_STATUS.GameOver}       // killed by the ghost, gameover
-        return {...state, ghost: newGhost}                      // return current position, deny movement
-      }
+      if (state.level[newPacmanPosition.y][newPacmanPosition.x] === ITEM.Wall) 
+        newPacmanPosition = {...state.pacman.position}
+      // 5. check collision with the ghost
+      if (newGhost.find( g => { return newPacmanPosition.x === g.x && newPacmanPosition.y === g.y })) 
+        return {...state, pacman: {...state.pacman, position: newPacmanPosition }, status: GAME_STATUS.GameOver}
+      let newLevel = [...state.level].map(function(arr) { return arr.slice() })    // mark new position as Playground (without Food)
+      newLevel[newPacmanPosition.y][newPacmanPosition.x] = ITEM.Playground
+      return {...state, pacman: {...state.pacman, position: newPacmanPosition }, level: newLevel, ghost: newGhost }
     default:
   }
   return {...state}
